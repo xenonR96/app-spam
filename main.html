@@ -43,57 +43,57 @@
 
     <!-- Language Dropdown -->
     <label for="language">Select Language:</label>
-    <select id="language">
+    <select id="language" onchange="checkSpam()">
         <option value="en">English</option>
         <option value="fr">French</option>
     </select>
 
     <div class="editor-container">
         <div class="highlighter" id="highlighter"></div>
-        <div class="editable-text" id="emailText" contenteditable="true" oninput="updateText()"></div>
+        <div class="editable-text" id="emailText" contenteditable="true" oninput="checkSpam()"></div>
     </div>
 
-    <button onclick="checkSpam()">Check Spam Score</button>
     <div id="result"></div>
 
     <script>
+        let timeout = null; // To debounce API calls
+
         async function checkSpam() {
-            const emailText = document.getElementById("emailText").innerText.trim();
-            const selectedLanguage = document.getElementById("language").value;
-            const resultDiv = document.getElementById("result");
+            clearTimeout(timeout); // Clear previous timeout
+            timeout = setTimeout(async () => {
+                const emailText = document.getElementById("emailText").innerText.trim();
+                const selectedLanguage = document.getElementById("language").value;
+                const resultDiv = document.getElementById("result");
 
-            if (!emailText) {
-                resultDiv.innerHTML = "<p style='color: red;'>⚠️ Please enter text to check.</p>";
-                return;
-            }
-
-            try {
-                const response = await fetch("http://127.0.0.1:5000/check_spam", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: emailText, language: selectedLanguage }),
-                });
-
-                if (!response.ok) {
-                    throw new Error("Server error. Please try again.");
+                if (!emailText) {
+                    resultDiv.innerHTML = "<p style='color: red;'>⚠️ Please enter text to check.</p>";
+                    document.getElementById("highlighter").innerHTML = emailText.replace(/\n/g, "<br>");
+                    return;
                 }
 
-                const data = await response.json();
-                resultDiv.innerHTML = `
-                    <p><strong>Spam Score:</strong> ${data.spam_score}%</p>
-                    <p><strong>Spam Words Found:</strong> ${data.spam_words.length > 0 ? data.spam_words.join(", ") : "None"}</p>
-                `;
+                try {
+                    const response = await fetch("http://127.0.0.1:5000/check_spam", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ text: emailText, language: selectedLanguage }),
+                    });
 
-                highlightSpamWords(emailText, data.spam_words);
-            } catch (error) {
-                console.error("Error:", error);
-                resultDiv.innerHTML = "<p style='color: red;'>❌ Error: Unable to check spam. Check console for details.</p>";
-            }
-        }
+                    if (!response.ok) {
+                        throw new Error("Server error. Please try again.");
+                    }
 
-        function updateText() {
-            const emailText = document.getElementById("emailText").innerText;
-            document.getElementById("highlighter").innerHTML = emailText.replace(/\n/g, "<br>");
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p><strong>Spam Score:</strong> ${data.spam_score}%</p>
+                        <p><strong>Spam Words Found:</strong> ${data.spam_words.length > 0 ? data.spam_words.join(", ") : "None"}</p>
+                    `;
+
+                    highlightSpamWords(emailText, data.spam_words);
+                } catch (error) {
+                    console.error("Error:", error);
+                    resultDiv.innerHTML = "<p style='color: red;'>❌ Error: Unable to check spam. Check console for details.</p>";
+                }
+            }, 300); // Delay API call to avoid too many requests
         }
 
         function highlightSpamWords(text, spamWords) {
