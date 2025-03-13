@@ -40,16 +40,26 @@
 </head>
 <body>
     <h2>Email Spam Checker</h2>
+
+    <!-- Language Dropdown -->
+    <label for="language">Select Language:</label>
+    <select id="language">
+        <option value="en">English</option>
+        <option value="fr">French</option>
+    </select>
+
     <div class="editor-container">
         <div class="highlighter" id="highlighter"></div>
         <div class="editable-text" id="emailText" contenteditable="true" oninput="updateText()"></div>
     </div>
+
     <button onclick="checkSpam()">Check Spam Score</button>
     <div id="result"></div>
 
     <script>
         async function checkSpam() {
             const emailText = document.getElementById("emailText").innerText.trim();
+            const selectedLanguage = document.getElementById("language").value;
             const resultDiv = document.getElementById("result");
 
             if (!emailText) {
@@ -61,7 +71,7 @@
                 const response = await fetch("http://127.0.0.1:5000/check_spam", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: emailText }),
+                    body: JSON.stringify({ text: emailText, language: selectedLanguage }),
                 });
 
                 if (!response.ok) {
@@ -83,7 +93,7 @@
 
         function updateText() {
             const emailText = document.getElementById("emailText").innerText;
-            document.getElementById("highlighter").innerHTML = emailText.replace(/\n/g, "<br>");  // Mirror user text
+            document.getElementById("highlighter").innerHTML = emailText.replace(/\n/g, "<br>");
         }
 
         function highlightSpamWords(text, spamWords) {

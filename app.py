@@ -4,21 +4,32 @@ import pandas as pd
 import re
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+CORS(app)  # Enable CORS for frontend-backend communication
 
-# Load spam words (including phrases)
-def load_spam_words():
+
+# Load spam words for different languages
+def load_spam_words(language):
     try:
-        df = pd.read_csv("spam_words.csv", delimiter=",")  # Ensure correct delimiter
+        if language == "fr":
+            df = pd.read_csv("spam_words_fr.csv", delimiter=",")
+        else:  # Default to English
+            df = pd.read_csv("spam_words.csv", delimiter=",")
+
         spam_list = df["Keyword"].dropna().str.lower().tolist()
-        spam_list.sort(key=len, reverse=True)  # Sort by length (longer phrases first)
-        print(f"✅ Loaded {len(spam_list)} spam words!")
-        return spam_list  # Keep as a sorted list
+        spam_list.sort(key=len, reverse=True)  # Sort longest phrases first
+        print(f"✅ Loaded {len(spam_list)} spam words for {language}!")
+        return spam_list
     except Exception as e:
-        print(f"❌ Error reading CSV: {e}")
+        print(f"❌ Error loading CSV for {language}: {e}")
         return []
 
-SPAM_WORDS = load_spam_words()
+
+# Dictionary to store both language lists
+SPAM_WORDS = {
+    "en": load_spam_words("en"),
+    "fr": load_spam_words("fr"),
+}
+
 
 @app.route('/check_spam', methods=['POST'])
 def check_spam():
@@ -30,18 +41,21 @@ def check_spam():
         return jsonify({"error": "No data received"}), 400
 
     email_text = data.get("text", "").lower().strip()
-    print(f"📝 Checking email text: {email_text}")
+    language = data.get("language", "en")  # Default to English
+    print(f"📝 Checking email text: {email_text} (Language: {language})")
+
+    if language not in SPAM_WORDS:
+        return jsonify({"error": "Unsupported language"}), 400
 
     found_spam_words = []
     checked_phrases = set()
 
-    for phrase in SPAM_WORDS:
+    for phrase in SPAM_WORDS[language]:
         if phrase in email_text and phrase not in checked_phrases:
             found_spam_words.append(phrase)
-            checked_phrases.update(phrase.split())  # Mark individual words to prevent duplicates
+            checked_phrases.update(phrase.split())
 
-    # Compute spam score as a percentage
-    total_words = len(email_text.split())  # Count total words in email
+    total_words = len(email_text.split())
     spam_score = round((len(found_spam_words) / total_words) * 100, 2) if total_words > 0 else 0
 
     print(f"🚨 Found spam words: {found_spam_words} (Score: {spam_score}%)")
@@ -51,6 +65,7 @@ def check_spam():
         "spam_score": spam_score
     })
 
+
 if __name__ == "__main__":
-    print("🚀 Flask server is running on http://127.0.0.1:5000/")
+    print("🚀 Flask server running on http://127.0.0.1:5000/")
     app.run(debug=True)
