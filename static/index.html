@@ -75,7 +75,7 @@
                 }
 
                 try {
-                    const response = await fetch(`${BASE_URL}/check_spam`, {
+                    const response = await fetch("${BASE_URL}/check_spam", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ text: emailText, language: selectedLanguage }),
