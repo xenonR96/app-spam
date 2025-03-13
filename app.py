@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import os
 
-app = Flask(__name__, static_folder="static", static_url_path="/")
+app = Flask(__name__, static_folder="static")
 CORS(app)  # Enable CORS for frontend-backend communication
 
 
@@ -73,6 +73,7 @@ def check_spam():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # Render uses 8080 by default
+    # Use Render's port if available, otherwise default to 5000 for local development
+    port = int(os.environ.get("PORT", 5001))
     print(f"🚀 Flask server running on port {port}...")
     app.run(host="0.0.0.0", port=port)
