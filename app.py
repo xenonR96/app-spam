@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import os
 
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="static", static_url_path="/")
 CORS(app)  # Enable CORS for frontend-backend communication
 
 
