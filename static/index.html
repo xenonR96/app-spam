@@ -57,6 +57,9 @@
 
     <script>
         let timeout = null; // To debounce API calls
+        const BASE_URL = window.location.hostname.includes("localhost")
+        ? "http://127.0.0.1:5000"  // Use localhost when running on PyCharm
+        : "";  // Use the same domain when deployed on Render
 
         async function checkSpam() {
             clearTimeout(timeout); // Clear previous timeout
@@ -72,7 +75,7 @@
                 }
 
                 try {
-                    const response = await fetch("/check_spam", {
+                    const response = await fetch(`${BASE_URL}/check_spam`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ text: emailText, language: selectedLanguage }),
