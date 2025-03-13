@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import pandas as pd
 import re
@@ -33,7 +33,7 @@ SPAM_WORDS = {
 # Add a homepage route (Prevents 404 on "/")
 @app.route("/")
 def home():
-    return "Welcome to the Spam Checker API! Use /check_spam to check for spam words."
+    return send_from_directory("static", "static/index.html")
 
 
 @app.route('/check_spam', methods=['POST'])
