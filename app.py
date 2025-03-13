@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import os
 
-app = Flask(__name__, static_folder="static", static_url_path="/")
+app = Flask(__name__, static_folder="static")
 CORS(app)  # Enable CORS for frontend-backend communication
 
 
@@ -34,7 +34,7 @@ SPAM_WORDS = {
 # Add a homepage route (Prevents 404 on "/")
 @app.route("/")
 def home():
-    return send_from_directory("static", "static/index.html")
+    return send_from_directory("static", "index.html")
 
 
 @app.route('/check_spam', methods=['POST'])
@@ -73,5 +73,6 @@ def check_spam():
 
 
 if __name__ == "__main__":
-    print("🚀 Flask server running on http://127.0.0.1:5000/")
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 8080))  # Render uses 8080 by default
+    print(f"🚀 Flask server running on port {port}...")
+    app.run(host="0.0.0.0", port=port)
