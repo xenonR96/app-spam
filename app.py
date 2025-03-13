@@ -30,6 +30,11 @@ SPAM_WORDS = {
     "fr": load_spam_words("fr"),
 }
 
+# Add a homepage route (Prevents 404 on "/")
+@app.route("/")
+def home():
+    return "Welcome to the Spam Checker API! Use /check_spam to check for spam words."
+
 
 @app.route('/check_spam', methods=['POST'])
 def check_spam():
