@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spam Checker</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        .editor-container { position: relative; display: inline-block; width: 80%; }
+        .highlighter, .editable-text {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .highlighter {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: white;
+            color: transparent;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .editable-text {
+            position: relative;
+            background: transparent;
+            z-index: 2;
+            outline: none;
+        }
+        .highlight { background-color: yellow; font-weight: bold; }
+        button { padding: 10px 20px; cursor: pointer; margin-top: 10px; }
+        #result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Email Spam Checker</h2>
+    <div class="editor-container">
+        <div class="highlighter" id="highlighter"></div>
+        <div class="editable-text" id="emailText" contenteditable="true" oninput="updateText()"></div>
+    </div>
+    <button onclick="checkSpam()">Check Spam Score</button>
+    <div id="result"></div>
+
+    <script>
+        async function checkSpam() {
+            const emailText = document.getElementById("emailText").innerText.trim();
+            const resultDiv = document.getElementById("result");
+
+            if (!emailText) {
+                resultDiv.innerHTML = "<p style='color: red;'>⚠️ Please enter text to check.</p>";
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/check_spam", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: emailText }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server error. Please try again.");
+                }
+
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <p><strong>Spam Score:</strong> ${data.spam_score}%</p>
+                    <p><strong>Spam Words Found:</strong> ${data.spam_words.length > 0 ? data.spam_words.join(", ") : "None"}</p>
+                `;
+
+                highlightSpamWords(emailText, data.spam_words);
+            } catch (error) {
+                console.error("Error:", error);
+                resultDiv.innerHTML = "<p style='color: red;'>❌ Error: Unable to check spam. Check console for details.</p>";
+            }
+        }
+
+        function updateText() {
+            const emailText = document.getElementById("emailText").innerText;
+            document.getElementById("highlighter").innerHTML = emailText.replace(/\n/g, "<br>");  // Mirror user text
+        }
+
+        function highlightSpamWords(text, spamWords) {
+            let highlightedText = text;
+            spamWords.forEach(word => {
+                const regex = new RegExp(`\\b${word}\\b`, "gi");
+                highlightedText = highlightedText.replace(regex, `<span class="highlight">${word}</span>`);
+            });
+
+            document.getElementById("highlighter").innerHTML = highlightedText.replace(/\n/g, "<br>");
+        }
+    </script>
+</body>
+</html>
